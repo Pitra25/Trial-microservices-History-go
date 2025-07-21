@@ -43,7 +43,7 @@ func NewClient(ctx context.Context, cfg Config) (*redis.Client, error) {
 // ======================================
 
 var cfg = Config{
-	Addr:        "127.0.0.1:6279",
+	Addr:        "127.0.0.1:6379",
 	Password:    "",
 	User:        "",
 	DB:          0,
@@ -53,9 +53,9 @@ var cfg = Config{
 }
 
 type Recording struct {
-	ID          string `json:"id"`
+	ID          int8   `json:"id"`
 	Calculation string `json:"calculation"`
-	CreatedAt   string `json:"created_at"`
+	CreatedAt   string `json:"createdAt"`
 }
 
 func GetRecordFromHash(key string) ([]Recording, error) {
@@ -114,7 +114,10 @@ func GetRecordFromHash(key string) ([]Recording, error) {
 }
 
 func CreatrRecording(record Recording) {
-	result, err := getRecord(record.ID)
+
+	IDstr := fmt.Sprint(record.ID)
+
+	result, err := getRecord(IDstr)
 	if err != nil {
 		panic("Error get recording")
 	} else {
@@ -128,8 +131,13 @@ func CreatrRecording(record Recording) {
 		panic(err)
 	}
 
+	userJSON, err := json.Marshal(record)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	const timeOfLife = 30 * time.Second
-	if err := dbR.Set(context.Background(), record.ID, record.Calculation, timeOfLife).Err(); err != nil {
+	if err := dbR.Set(context.Background(), IDstr, userJSON, timeOfLife).Err(); err != nil {
 		log.Fatalf("REDIS | Failed to set data, error: %s", err.Error())
 	}
 }
@@ -143,7 +151,7 @@ func getRecord(key string) (Recording, error) {
 
 	val, err := rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
-		return Recording{}, fmt.Errorf("REDIS | value not found for key: %s", key)
+		return Recording{}, nil
 	} else if err != nil {
 		return Recording{}, fmt.Errorf("REDIS | failed to get value: %v", err)
 	}

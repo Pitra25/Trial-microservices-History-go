@@ -5,29 +5,41 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file", err)
+	}
+
 	http.HandleFunc("/histore", historeHandler)
 	http.HandleFunc("/calculator", calculatorHandler)
 
 	fmt.Println("Starting server at port 8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println("Error starting the server:", err)
+	errS := http.ListenAndServe(":8080", nil)
+	if errS != nil {
+		fmt.Println("Error starting the server:", errS)
 	}
 }
 
 func historeHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		render.Status(r, http.StatusBadRequest)
-		return
-	}
+	// idStr := chi.URLParam(r, "id")
+
+	queryParams := r.URL.Query()
+	// Получаем значение параметра "name"
+	idStr := queryParams.Get("id")
+
+	// if idStr == "" {
+	// 	render.Status(r, http.StatusBadRequest)
+	// 	return
+	// }
 
 	// id, err := strconv.Atoi(idStr)
 	// if err != nil {
