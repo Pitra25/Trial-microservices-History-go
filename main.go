@@ -76,8 +76,6 @@ func calculatorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2025-07-18 20:50:00.623091+00
-
 	// Validate required fields
 	if record.Calculation == "" || record.CreatedAt == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
