@@ -14,14 +14,14 @@ func TestConnection() bool {
 	databaseURL := os.Getenv("DATABASE_URL_MYSQL")
 
 	if databaseURL == "" {
-		log.Fatalf("Database connection string missing")
+		log.Fatalln("database connection string missing")
 		return false
 	}
 
 	// Открываем соединение с MySQL
 	db, err := sql.Open("mysql", databaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		log.Fatalln("failed to connect to the database: ", err)
 		return false
 	}
 	defer db.Close()
@@ -29,7 +29,7 @@ func TestConnection() bool {
 	// Проверяем соединение
 	err = db.Ping()
 	if err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
+		log.Fatalln("failed to ping database: ", err)
 		return false
 	}
 
@@ -37,11 +37,11 @@ func TestConnection() bool {
 	var version string
 	err = db.QueryRow("SELECT VERSION()").Scan(&version)
 	if err != nil {
-		log.Fatalf("Query failed: %v", err)
+		log.Fatalln("query failed: ", err)
 		return false
 	}
 
-	log.Println("Connected to MySQL version:", version)
+	log.Println("connected to MySQL version: ", version)
 	return true
 }
 
@@ -49,13 +49,13 @@ func Connect() (*sql.DB, error) {
 	databaseURL := os.Getenv("DATABASE_URL_MYSQL")
 
 	if databaseURL == "" {
-		return nil, fmt.Errorf("Database connection string missing")
+		return nil, fmt.Errorf("database connection string missing")
 	}
 
 	// Открываем соединение с MySQL
 	conn, err := sql.Open("mysql", databaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		log.Fatalln("failed to connect to the database: ", err)
 		return nil, err
 	}
 	//defer conn.Close()

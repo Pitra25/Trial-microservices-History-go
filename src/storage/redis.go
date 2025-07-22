@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"Trial-microservices-History-go/src/types"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -52,13 +53,7 @@ var cfg = Config{
 	Timeout:     5 * time.Second,
 }
 
-type Recording struct {
-	ID          int8   `json:"id"`
-	Calculation string `json:"calculation"`
-	CreatedAt   string `json:"createdAt"`
-}
-
-func GetRecordFromHash(key string) ([]Recording, error) {
+func GetRecordFromHash(key string) ([]*types.Recording, error) {
 	ctx := context.Background()
 	rdb, err := NewClient(ctx, cfg)
 	if err != nil {
@@ -72,11 +67,11 @@ func GetRecordFromHash(key string) ([]Recording, error) {
 			return nil, fmt.Errorf("Failed to get recording: %v", err)
 		}
 
-		return []Recording{val}, nil
+		return []*types.Recording{val}, nil
 	} else {
 		// Get all records
 		var (
-			recordings []Recording
+			recordings []*types.Recording
 			cursor     uint64
 			keys       []string
 		)
@@ -113,7 +108,7 @@ func GetRecordFromHash(key string) ([]Recording, error) {
 	}
 }
 
-func CreatrRecording(record Recording) {
+func CreatrRecording(record *types.Recording) {
 
 	IDstr := fmt.Sprint(record.ID)
 
@@ -142,24 +137,24 @@ func CreatrRecording(record Recording) {
 	}
 }
 
-func getRecord(key string) (Recording, error) {
+func getRecord(key string) (*types.Recording, error) {
 	ctx := context.Background()
 	rdb, err := NewClient(ctx, cfg)
 	if err != nil {
-		return Recording{}, fmt.Errorf("failed to connect to redis: %v", err)
+		return &types.Recording{}, fmt.Errorf("failed to connect to redis: %v", err)
 	}
 
 	val, err := rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
-		return Recording{}, nil
+		return &types.Recording{}, nil
 	} else if err != nil {
-		return Recording{}, fmt.Errorf("REDIS | failed to get value: %v", err)
+		return &types.Recording{}, fmt.Errorf("REDIS | failed to get value: %v", err)
 	}
 
-	var recording Recording
+	var recording *types.Recording
 	err = json.Unmarshal([]byte(val), &recording)
 	if err != nil {
-		return Recording{}, fmt.Errorf("REDIS | failed to unmarshal recording: %v", err)
+		return &types.Recording{}, fmt.Errorf("REDIS | failed to unmarshal recording: %v", err)
 	}
 
 	return recording, nil

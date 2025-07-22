@@ -2,6 +2,7 @@ package main
 
 import (
 	"Trial-microservices-History-go/src"
+	"Trial-microservices-History-go/src/types"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,33 +20,28 @@ func main() {
 		log.Fatal("Error loading .env file", err)
 	}
 
-	http.HandleFunc("/histore", historeHandler)
-	http.HandleFunc("/calculator", calculatorHandler)
+	http.HandleFunc("/history", historeHandler)
+	http.HandleFunc("/save", calculatorHandler)
 
-	fmt.Println("Starting server at port 8080")
 	errS := http.ListenAndServe(":8080", nil)
 	if errS != nil {
 		fmt.Println("Error starting the server:", errS)
 	}
+
+	fmt.Println("Starting server at port 8080")
+
 }
 
 func historeHandler(w http.ResponseWriter, r *http.Request) {
-	// idStr := chi.URLParam(r, "id")
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(404)
+		w.Write([]byte("Post method NOT"))
+		return
+	}
 
 	queryParams := r.URL.Query()
-	// Получаем значение параметра "name"
 	idStr := queryParams.Get("id")
-
-	// if idStr == "" {
-	// 	render.Status(r, http.StatusBadRequest)
-	// 	return
-	// }
-
-	// id, err := strconv.Atoi(idStr)
-	// if err != nil {
-	// 	render.Status(r, http.StatusBadRequest)
-	// 	return
-	// }
 
 	result := src.GetHistory(idStr)
 
@@ -54,12 +50,14 @@ func historeHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-type Recording struct {
-	Calculation string `json:"Calculation"`
-	CreatedAt   string `json:"CreatedAt"`
-}
-
 func calculatorHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(404)
+		w.Write([]byte("Get method NOT"))
+		return
+	}
+
 	// Read request body
 	bodyByt, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -69,7 +67,7 @@ func calculatorHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// Parse JSON into struct
-	var record Recording
+	var record *types.BodyStructure
 	err = json.Unmarshal(bodyByt, &record)
 	if err != nil {
 		http.Error(w, "Invalid request format", http.StatusBadRequest)

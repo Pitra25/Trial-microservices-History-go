@@ -2,6 +2,9 @@ package src
 
 import (
 	"Trial-microservices-History-go/src/db/mysql"
+	"Trial-microservices-History-go/src/types"
+
+	// "Trial-microservices-History-go/src/db/postgres"
 	"Trial-microservices-History-go/src/storage"
 	"database/sql"
 	"log"
@@ -18,7 +21,7 @@ import (
 // func SaveHistory(bode createrPromise) error {
 func SaveHistory(Calculation string, CreatedAt string) error {
 
-	// if !mysql.TestConnection() {
+	// if !postgres.TestConnection() {
 	// 	panic("Error conection!!!")
 	// }
 	// conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL_MYSQL"))
@@ -58,20 +61,14 @@ func SaveHistory(Calculation string, CreatedAt string) error {
 	return nil
 }
 
-type Recording struct {
-	ID          int8   `json:"id"`
-	CreatedAt   string `json:"createdAt"`
-	Calculation string `json:"calculation"`
-}
-
-func GetHistory(key string) []Recording {
+func GetHistory(key string) []*types.Recording {
 
 	storageRecords, err := storage.GetRecordFromHash(key)
 	if err != nil && len(storageRecords) != 0 {
 		// log.Fatalf("Error get redis recording: %v", err)
-		result := make([]Recording, len(storageRecords))
+		result := make([]*types.Recording, len(storageRecords))
 		for i, record := range storageRecords {
-			result[i] = Recording{
+			result[i] = &types.Recording{
 				ID:          record.ID,
 				Calculation: record.Calculation,
 				CreatedAt:   record.CreatedAt,
@@ -85,7 +82,6 @@ func GetHistory(key string) []Recording {
 	}
 
 	// TEST save redis
-
 	// save := storage.Recording{
 	// 	ID:          15,
 	// 	Calculation: "1+1=5",
@@ -97,13 +93,11 @@ func GetHistory(key string) []Recording {
 	// if !mysql.TestConnection() {
 	// 	panic("Error conection!!!")
 	// }
-
 	// conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL_MYSQL"))
 	// if err != nil {
 	// 	log.Fatalf("Failed to connect to the database: %v", err)
 	// }
 	// defer conn.Close(context.Background())
-
 	// rows, err := conn.Query(context.Background(), "SELECT * from historys")
 	// if err != nil {
 	// 	log.Fatalf("Error GET recording: %v", err)
@@ -118,46 +112,43 @@ func GetHistory(key string) []Recording {
 	conn, err := mysql.Connect()
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
-		return []Recording{}
+		return []*types.Recording{}
 	}
 
 	var rows *sql.Rows
 	var errG error
-
 	if key == "" {
 		rows, errG = conn.Query("SELECT * from historys")
 		if errG != nil {
-			log.Fatalf("Error GET recording: %v", errG)
+			log.Fatalln("error GET recording: ", errG)
 		}
 		defer mysql.Deconect(conn)
 	} else {
 		numInt, err := strconv.Atoi(key)
 		if err != nil {
-			log.Fatalf("Error converting string to int:", err)
-			return []Recording{}
+			log.Fatalln("error converting string to int: ", err)
+			return []*types.Recording{}
 		}
 
 		rows, errG = conn.Query("SELECT * from historys where id = ?", numInt)
 		if errG != nil {
-			log.Fatalf("Error GET recording: %v", errG)
+			log.Fatalln("error GET recording: ", errG)
 		}
 		defer mysql.Deconect(conn)
 	}
 
-	var historesArray []Recording
+	var historesArray []*types.Recording
 
 	for rows.Next() {
-		var histore Recording
+		histore := &types.Recording{}
 
 		err := rows.Scan(&histore.ID, &histore.Calculation, &histore.CreatedAt)
 		if err != nil {
-			log.Fatalf("Failed to get entry history: %v", err)
+			log.Fatalln("failed to get entry history: ", err)
 			continue
 		}
 
-		//TODO сохранение в redis
-
-		storage.CreatrRecording(storage.Recording{
+		storage.CreatrRecording(&types.Recording{
 			ID:          histore.ID,
 			Calculation: histore.Calculation,
 			CreatedAt:   histore.CreatedAt,
